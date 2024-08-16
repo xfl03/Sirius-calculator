@@ -11,6 +11,7 @@ export interface Character {
     concentration: number
   }
   starActMasterId: number
+  awakenStarActMasterId?: number
   senseMasterId: number
   forbidGenericItemBloom: boolean
   bloomBonusGroupMasterId: number
@@ -21,4 +22,11 @@ export interface Character {
   displayStartAt: number
   displayEndAt: number
   unlockText: string
+  categories: Array<{
+    categoryMasterId: number
+    isAwaken: boolean
+  }>
+  leaderSenseMasterId: number
+  maxTalentStage: number
+  maxTalentStageReleaseDate?: number
 }

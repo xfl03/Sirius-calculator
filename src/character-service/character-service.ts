@@ -12,6 +12,8 @@ import { StoryEventService } from '../event-service/story-event-service'
 import { characterBaseChineseNames } from '../translation-service/character-translation'
 import { type CharacterEpisodeDetail, CharacterEpisodeService } from './character-episode-service'
 import { type CharacterOrPosterType, getCharacterPosterType } from '../common/character-or-poster-type'
+import { type LeaderSenseDetail, LeaderSenseService } from './leader-sense-service'
+import { CategoryService } from './category-service'
 
 export class CharacterService {
   private readonly characterBaseService: CharacterBaseService
@@ -21,6 +23,8 @@ export class CharacterService {
   private readonly storyEventService: StoryEventService
   private readonly gachaService: GachaService
   private readonly characterEpisodeService: CharacterEpisodeService
+  private readonly leaderSenseService: LeaderSenseService
+  private readonly categoryService: CategoryService
 
   private readonly characterCalculator: CharacterCalculator
   public constructor (private readonly dataProvider: DataProvider = DataProviderFactory.defaultDataProvider()) {
@@ -31,6 +35,8 @@ export class CharacterService {
     this.storyEventService = new StoryEventService(dataProvider)
     this.gachaService = new GachaService(dataProvider)
     this.characterEpisodeService = new CharacterEpisodeService(dataProvider)
+    this.leaderSenseService = new LeaderSenseService(dataProvider)
+    this.categoryService = new CategoryService(dataProvider)
 
     this.characterCalculator = new CharacterCalculator(dataProvider)
   }
@@ -43,6 +49,10 @@ export class CharacterService {
     return await this.dataProvider.getMasterDataById<Character>('character', id)
   }
 
+  private static getCategoryIds (character: Character, isAwaken: boolean): number[] {
+    return character.categories.filter(it => it.isAwaken === isAwaken).map(it => it.categoryMasterId)
+  }
+
   /**
    * 获得角色（卡牌）详情信息
    * @param id
@@ -51,6 +61,8 @@ export class CharacterService {
     const character = await this.getCharacter(id)
     const event = await this.storyEventService.getFirstAppearStoryEvent(character.displayStartAt)
     const gacha = await this.gachaService.getCharacterFirstAppearGacha(character.id, character.displayStartAt)
+    const categoriesDefault = await this.categoryService.batchGetCategoryName(CharacterService.getCategoryIds(character, false))
+    const categoriesAwaken = await this.categoryService.batchGetCategoryName(CharacterService.getCategoryIds(character, true))
     return {
       id: character.id,
       name: character.name,
@@ -67,7 +79,10 @@ export class CharacterService {
       event: event.title,
       gacha: gacha.name,
       type: getCharacterPosterType(character.unlockText),
-      episodes: await this.characterEpisodeService.getCharacterEpisodeDetails(character.id)
+      episodes: await this.characterEpisodeService.getCharacterEpisodeDetails(character.id),
+      leaderSense: await this.leaderSenseService.getLeaderSenseDetail(character.leaderSenseMasterId),
+      categoriesDefault,
+      categoriesAwaken
     }
   }
 
@@ -96,4 +111,7 @@ interface CharacterDetail {
   gacha: string
   type: CharacterOrPosterType
   episodes: CharacterEpisodeDetail[]
+  leaderSense: LeaderSenseDetail
+  categoriesDefault: string[]
+  categoriesAwaken: string[]
 }

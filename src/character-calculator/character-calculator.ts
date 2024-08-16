@@ -102,7 +102,7 @@ export class CharacterCalculator {
       level: await this.getMaxCharacterLevel(),
       awakening: character.characterAwakeningItemGroupMasterId !== undefined,
       episode: await this.characterEpisodeService.getCharacterMaxEpisodeStatus(character.id),
-      bloom: 5
+      bloom: character.maxTalentStage
     })
   }
 }
